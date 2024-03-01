@@ -13,11 +13,17 @@ from unidock_tools.modules.ligand_prep import TopologyBuilder
 def iter_ligands(ligands: List[Path], batch_size: int = 1200,
                  use_file_name: bool = False) -> Generator[List[Tuple[Chem.Mol, str]], None, None]:
     curr_mol_name_list = []
+    inner_name_dict = dict()
     for ligand in ligands:
         mols = list(Chem.SDMolSupplier(str(ligand), removeHs=False))
         for i, mol in enumerate(mols):
             if not use_file_name and mol.HasProp("_Name") and mol.GetProp("_Name").strip():
                 name = mol.GetProp("_Name").strip()
+                suffix_ind = 1
+                while name in inner_name_dict:
+                    name = f"{name}_{suffix_ind}"
+                    suffix_ind += 1
+                inner_name_dict[name] = 1
             else:
                 name = f"{ligand.stem}_{i}" if len(mols) > 1 else ligand.stem
             curr_mol_name_list.append((mol, name))
